@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>月子中心比較 — 赴美生子工具箱</title>
+  <meta name="description" content="比較洛杉磯、爾灣、聖蓋博谷月子中心方案，一目瞭然找到最適合你的月子中心。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    /* === 視圖切換按鈕組 === */
+    .view-toggle {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .view-toggle button {
+      padding: 8px 20px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .view-toggle button.active {
+      background: var(--primary);
+      color: var(--bg-deep);
+      font-weight: 600;
+    }
+
+    .view-toggle button:hover:not(.active) {
+      color: var(--primary);
+    }
+
+    /* === 頂部工具列 === */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .filter-group-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* === 卡片式視圖 === */
+    .center-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 24px;
+      padding-bottom: 40px;
+    }
+
+    .center-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0;
+      overflow: hidden;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .center-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .center-card-header {
+      padding: 24px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+
+    .center-card-header .price-badge {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: var(--bg-deep);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .center-card-header h3 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-white);
+      margin-bottom: 6px;
+      padding-right: 100px;
+    }
+
+    .center-card-header .location {
+      font-size: 14px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .center-card-body {
+      padding: 20px 24px;
+    }
+
+    .center-card-body .stars {
+      color: #FFD700;
+      font-size: 16px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .center-card-body .stars .rating-num {
+      color: var(--text-gray);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .center-card-info {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .center-card-info .info-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--text-gray);
+    }
+
+    .center-card-info .info-row .info-icon {
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .center-card-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* === VIP 卡片標記 === */
+    .center-card.vip {
+      border-color: rgba(255, 215, 0, 0.3);
+    }
+
+    .center-card.vip::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #FFD700, var(--accent));
+    }
+
+    .vip-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(255, 215, 0, 0.15);
+      color: #FFD700;
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    /* === 表格式視圖 === */
+    .table-view-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      margin-bottom: 40px;
+    }
+
+    .table-view-wrapper .data-table th {
+      background: var(--bg-card);
+      position: sticky;
+      top: 0;
+      white-space: nowrap;
+    }
+
+    .table-view-wrapper .data-table td {
+      white-space: nowrap;
+    }
+
+    .table-view-wrapper .data-table td:first-child {
+      font-weight: 700;
+      color: var(--primary);
+      white-space: normal;
+      min-width: 140px;
+    }
+
+    .table-view-wrapper .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* === 沒有結果提示 === */
+    .no-results {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .no-results .icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .no-results p {
+      font-size: 16px;
+    }
+
+    /* === 篩選區段 === */
+    .filters-section {
+      margin-bottom: 32px;
+    }
+
+    .filters-row {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .filter-block {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .filter-block .filter-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* === 統計卡片 === */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-card .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .stat-card .stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* === 響應式 === */
+    @media (max-width: 768px) {
+      .center-cards-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .toolbar-left {
+        flex-direction: column;
+      }
+
+      .filters-row {
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .center-card-header h3 {
+        padding-right: 0;
+        margin-bottom: 8px;
+      }
+
+      .center-card-header .price-badge {
+        position: static;
+        display: inline-block;
+        margin-top: 8px;
+      }
+
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body data-page="confinement-center">
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="container">
+      <div class="navbar-brand">
+        <span class="icon">🏠</span>
+        <div>
+          <span>月子中心比較</span><br>
+          <span class="subtitle">赴美生子工具箱</span>
+        </div>
+      </div>
+      <a href="../index.html" class="navbar-back">← 返回首頁</a>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>月子中心方案比較</h1>
+      <p>比較洛杉磯、爾灣、聖蓋博谷地區的月子中心，從價格、房型、餐食到特色服務一目瞭然。</p>
+    </div>
+
+    <!-- 統計概覽 -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value" id="statTotal">5</div>
+        <div class="stat-label">月子中心總數</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statMinPrice">$3,000</div>
+        <div class="stat-label">最低月費</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statMaxPrice">$7,500</div>
+        <div class="stat-label">最高月費</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statAvgRating">4.6</div>
+        <div class="stat-label">平均評分</div>
+      </div>
+    </div>
+
+    <!-- 篩選 + 視圖切換 -->
+    <div class="filters-section">
+      <div class="toolbar">
+        <div class="filters-row">
+          <div class="filter-block">
+            <span class="filter-label">依地區篩選</span>
+            <div class="filter-tabs" id="areaFilters">
+              <button class="filter-tab active" data-filter="all">全部地區</button>
+              <button class="filter-tab" data-filter="洛杉磯">洛杉磯</button>
+              <button class="filter-tab" data-filter="爾灣">爾灣</button>
+              <button class="filter-tab" data-filter="聖蓋博谷">聖蓋博谷</button>
+            </div>
+          </div>
+          <div class="filter-block">
+            <span class="filter-label">依價位篩選</span>
+            <div class="filter-tabs" id="priceFilters">
+              <button class="filter-tab active" data-filter="all">不限</button>
+              <button class="filter-tab" data-filter="經濟">經濟型</button>
+              <button class="filter-tab" data-filter="中等">中等</button>
+              <button class="filter-tab" data-filter="豪華">豪華</button>
+            </div>
+          </div>
+        </div>
+        <div class="view-toggle" id="viewToggle">
+          <button class="active" data-view="card">卡片式</button>
+          <button data-view="table">表格式</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 卡片式視圖 -->
+    <div id="cardView" class="center-cards-grid"></div>
+
+    <!-- 表格式視圖 -->
+    <div id="tableView" class="table-view-wrapper" style="display: none;"></div>
+
+    <!-- 沒有結果 -->
+    <div id="noResults" class="no-results" style="display: none;">
+      <span class="icon">🔍</span>
+      <p>沒有符合條件的月子中心，請調整篩選條件。</p>
+    </div>
+
+    <!-- 小提醒 -->
+    <div class="info-box tip">
+      以上資料僅供參考比較，實際價格與服務內容請洽臣邑創昱移民顧問確認最新方案。所有價格皆為美金/月。
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>臣邑創昱移民顧問 &copy; 2026 ｜ AI 實戰培訓課程成果展示</p>
+  </footer>
+
+  <script src="../js/main.js"></script>
+  <script>
+    // ===== 月子中心假資料 =====
+    const centers = [
+      {
+        id: 1,
+        name: '陽光寶貝月子中心',
+        area: '洛杉磯',
+        city: 'Arcadia',
+        price: 3500,
+        priceLevel: '中等',
+        rating: 4.5,
+        roomType: '標準房',
+        meals: '三餐 + 點心',
+        feature: '華人社區方便',
+        tags: ['華人社區', '生活便利', '中文服務'],
+        highlights: ['鄰近華人超市與餐廳', '提供產前產後護理指導', '免費機場接送']
+      },
+      {
+        id: 2,
+        name: '天使之家',
+        area: '爾灣',
+        city: 'Irvine',
+        price: 5500,
+        priceLevel: '豪華',
+        rating: 4.8,
+        roomType: '豪華房',
+        meals: '三餐 + 月子餐 + 營養品',
+        feature: '高級社區安全好',
+        tags: ['高級社區', '安全優先', '營養月子餐'],
+        highlights: ['Irvine 頂級學區住宅', '24 小時安保社區', '專業營養師調配月子餐']
+      },
+      {
+        id: 3,
+        name: '美寶莊園',
+        area: '聖蓋博谷',
+        city: 'Rowland Heights',
+        price: 3000,
+        priceLevel: '經濟',
+        rating: 4.2,
+        roomType: '雙人房',
+        meals: '三餐',
+        feature: '價格實惠',
+        tags: ['高CP值', '經濟實惠', '中文服務'],
+        highlights: ['最親民的價格方案', '提供媽媽教室課程', '歡迎家屬陪住']
+      },
+      {
+        id: 4,
+        name: '加州媽咪會所',
+        area: '爾灣',
+        city: 'Irvine',
+        price: 7500,
+        priceLevel: '豪華',
+        rating: 4.9,
+        roomType: 'VIP 獨棟',
+        meals: '全套月子餐 + 專屬月嫂',
+        feature: '頂級服務',
+        tags: ['VIP尊榮', '專屬月嫂', '獨棟別墅'],
+        highlights: ['獨立別墅完整隱私', '一對一專屬月嫂全天候照護', '高端產後恢復療程'],
+        isVip: true
+      },
+      {
+        id: 5,
+        name: '幸福滿月中心',
+        area: '洛杉磯',
+        city: 'Monterey Park',
+        price: 4200,
+        priceLevel: '中等',
+        rating: 4.6,
+        roomType: '標準房',
+        meals: '三餐 + 藥膳',
+        feature: '中藥調理',
+        tags: ['中藥調理', '藥膳養生', '傳統月子'],
+        highlights: ['合格中醫師駐點調理', '客製化藥膳湯品', '產後體質調養計畫']
+      }
+    ];
+
+    // ===== 狀態 =====
+    let currentAreaFilter = 'all';
+    let currentPriceFilter = 'all';
+    let currentView = 'card';
+
+    // ===== 初始化 =====
+    document.addEventListener('DOMContentLoaded', () => {
+      setupFilters();
+      setupViewToggle();
+      render();
+    });
+
+    // ===== 篩選邏輯 =====
+    function setupFilters() {
+      // 地區篩選
+      document.querySelectorAll('#areaFilters .filter-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('#areaFilters .filter-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          currentAreaFilter = tab.dataset.filter;
+          render();
+        });
+      });
+
+      // 價位篩選
+      document.querySelectorAll('#priceFilters .filter-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('#priceFilters .filter-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          currentPriceFilter = tab.dataset.filter;
+          render();
+        });
+      });
+    }
+
+    // ===== 視圖切換 =====
+    function setupViewToggle() {
+      document.querySelectorAll('#viewToggle button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#viewToggle button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentView = btn.dataset.view;
+          render();
+        });
+      });
+    }
+
+    // ===== 篩選資料 =====
+    function getFilteredCenters() {
+      return centers.filter(c => {
+        const areaMatch = currentAreaFilter === 'all' || c.area === currentAreaFilter;
+        const priceMatch = currentPriceFilter === 'all' || c.priceLevel === currentPriceFilter;
+        return areaMatch && priceMatch;
+      });
+    }
+
+    // ===== 渲染星星 =====
+    function renderStars(rating) {
+      const full = Math.floor(rating);
+      const half = rating % 1 >= 0.5 ? 1 : 0;
+      const empty = 5 - full - half;
+      return '★'.repeat(full) + (half ? '☆' : '') + '☆'.repeat(empty);
+    }
+
+    // ===== 取得標籤顏色 =====
+    function getTagClass(index) {
+      const classes = ['tag-cyan', 'tag-pink', 'tag-orange', 'tag-green'];
+      return classes[index % classes.length];
+    }
+
+    // ===== 更新統計 =====
+    function updateStats(filtered) {
+      document.getElementById('statTotal').textContent = filtered.length;
+
+      if (filtered.length > 0) {
+        const prices = filtered.map(c => c.price);
+        const ratings = filtered.map(c => c.rating);
+        document.getElementById('statMinPrice').textContent = '$' + formatNumber(Math.min(...prices));
+        document.getElementById('statMaxPrice').textContent = '$' + formatNumber(Math.max(...prices));
+        document.getElementById('statAvgRating').textContent = (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1);
+      } else {
+        document.getElementById('statMinPrice').textContent = '-';
+        document.getElementById('statMaxPrice').textContent = '-';
+        document.getElementById('statAvgRating').textContent = '-';
+      }
+    }
+
+    // ===== 主渲染 =====
+    function render() {
+      const filtered = getFilteredCenters();
+      updateStats(filtered);
+
+      const cardView = document.getElementById('cardView');
+      const tableView = document.getElementById('tableView');
+      const noResults = document.getElementById('noResults');
+
+      // 隱藏所有
+      cardView.style.display = 'none';
+      tableView.style.display = 'none';
+      noResults.style.display = 'none';
+
+      if (filtered.length === 0) {
+        noResults.style.display = 'block';
+        return;
+      }
+
+      if (currentView === 'card') {
+        cardView.style.display = 'grid';
+        renderCards(filtered);
+      } else {
+        tableView.style.display = 'block';
+        renderTable(filtered);
+      }
+    }
+
+    // ===== 渲染卡片 =====
+    function renderCards(data) {
+      const container = document.getElementById('cardView');
+      container.innerHTML = data.map(c => `
+        <div class="center-card ${c.isVip ? 'vip' : ''}">
+          <div class="center-card-header">
+            <h3>
+              ${c.name}
+              ${c.isVip ? '<span class="vip-badge">VIP</span>' : ''}
+            </h3>
+            <div class="location">📍 ${c.area} · ${c.city}</div>
+            <span class="price-badge">$${formatNumber(c.price)}/月</span>
+          </div>
+          <div class="center-card-body">
+            <div class="stars">
+              ${renderStars(c.rating)}
+              <span class="rating-num">${c.rating}</span>
+            </div>
+            <div class="center-card-info">
+              <div class="info-row">
+                <span class="info-icon">🛏️</span>
+                <span>房型：${c.roomType}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-icon">🍽️</span>
+                <span>餐食：${c.meals}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-icon">✨</span>
+                <span>特色：${c.feature}</span>
+              </div>
+            </div>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+              ${c.highlights.map(h => `
+                <li style="font-size: 13px; color: var(--text-muted); padding: 3px 0; display: flex; align-items: center; gap: 8px;">
+                  <span style="color: var(--primary); font-size: 10px;">●</span> ${h}
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+          <div class="center-card-footer">
+            ${c.tags.map((tag, i) => `<span class="tag ${getTagClass(i)}">${tag}</span>`).join('')}
+          </div>
+        </div>
+      `).join('');
+
+      // 卡片漸入動畫
+      container.querySelectorAll('.center-card').forEach((card, i) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+          card.style.transition = 'all 0.4s ease';
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0)';
+        }, 80 + i * 100);
+      });
+    }
+
+    // ===== 渲染表格 =====
+    function renderTable(data) {
+      const container = document.getElementById('tableView');
+      container.innerHTML = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>月子中心</th>
+              <th>地區</th>
+              <th>月費 (USD)</th>
+              <th>評分</th>
+              <th>房型</th>
+              <th>餐食</th>
+              <th>特色</th>
+              <th>價位</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.map(c => `
+              <tr>
+                <td>
+                  ${c.name}
+                  ${c.isVip ? '<span class="vip-badge">VIP</span>' : ''}
+                </td>
+                <td>${c.area} · ${c.city}</td>
+                <td style="font-weight: 700; color: var(--primary);">$${formatNumber(c.price)}</td>
+                <td>
+                  <span style="color: #FFD700;">${renderStars(c.rating)}</span>
+                  <span style="color: var(--text-gray); margin-left: 4px;">${c.rating}</span>
+                </td>
+                <td>${c.roomType}</td>
+                <td>${c.meals}</td>
+                <td>${c.feature}</td>
+                <td><span class="tag ${c.priceLevel === '豪華' ? 'tag-orange' : c.priceLevel === '中等' ? 'tag-cyan' : 'tag-green'}">${c.priceLevel}</span></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+  </script>
+
+</body>
+</html>

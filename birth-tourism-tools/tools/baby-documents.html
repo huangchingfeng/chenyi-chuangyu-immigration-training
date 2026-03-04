@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>寶寶證件追蹤 — 赴美生子工具箱</title>
+  <meta name="description" content="追蹤寶寶出生後五大證件辦理進度：出生證明、SSN、美國護照、台灣護照、戶籍登記。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    /* 頁面專用樣式 */
+    .birth-date-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .birth-date-section .form-group {
+      margin-bottom: 0;
+      flex: 0 0 auto;
+    }
+
+    .birth-date-section input[type="date"] {
+      width: 200px;
+    }
+
+    .days-since {
+      font-size: 15px;
+      color: var(--text-gray);
+    }
+
+    .days-since strong {
+      color: var(--primary);
+      font-size: 20px;
+    }
+
+    .progress-section {
+      margin-bottom: 32px;
+    }
+
+    .progress-section h3 {
+      font-size: 16px;
+      color: var(--text-gray);
+      margin-bottom: 12px;
+    }
+
+    .doc-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 20px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .doc-card:hover {
+      border-color: var(--border-hover);
+    }
+
+    .doc-card.checked {
+      opacity: 0.6;
+      border-color: rgba(39, 174, 96, 0.3);
+    }
+
+    .doc-card.checked .check-box {
+      background: #27ae60;
+      border-color: #27ae60;
+    }
+
+    .doc-card .check-box {
+      margin-top: 2px;
+    }
+
+    .doc-info {
+      flex: 1;
+    }
+
+    .doc-info .doc-title {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .doc-info .doc-title-en {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .doc-info .doc-estimate {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .estimate-short {
+      background: rgba(39, 174, 96, 0.15);
+      color: #27ae60;
+    }
+
+    .estimate-medium {
+      background: rgba(0, 212, 255, 0.15);
+      color: var(--primary);
+    }
+
+    .estimate-long {
+      background: rgba(255, 107, 53, 0.15);
+      color: var(--accent);
+    }
+
+    .estimate-variable {
+      background: rgba(255, 182, 193, 0.15);
+      color: var(--baby-pink);
+    }
+
+    .doc-info .doc-desc {
+      font-size: 14px;
+      color: var(--text-gray);
+      line-height: 1.7;
+    }
+
+    .doc-number {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--baby-pink));
+      color: var(--bg-deep);
+      font-size: 16px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .doc-card.checked .doc-number {
+      background: #27ae60;
+      color: white;
+    }
+
+    .section-padding {
+      padding-bottom: 60px;
+    }
+  </style>
+</head>
+<body data-page="baby-documents">
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="container">
+      <div class="navbar-brand">
+        <span class="icon">📋</span>
+        <div>
+          <span>寶寶證件追蹤</span><br>
+          <span class="subtitle">赴美生子工具箱</span>
+        </div>
+      </div>
+      <a href="../index.html" class="navbar-back">← 返回首頁</a>
+    </div>
+  </nav>
+
+  <div class="container section-padding">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>寶寶證件辦理進度</h1>
+      <p>追蹤寶寶出生後五大證件的辦理狀態，勾選已完成項目，進度自動儲存。</p>
+    </div>
+
+    <!-- 出生日期輸入 -->
+    <div class="birth-date-section">
+      <div class="form-group">
+        <label for="birthDate">寶寶出生日期（選填）</label>
+        <input type="date" id="birthDate">
+      </div>
+      <div class="days-since" id="daysSince" style="display: none;">
+        寶寶已出生 <strong id="dayCount">0</strong> 天
+      </div>
+    </div>
+
+    <!-- 進度條 -->
+    <div class="progress-section">
+      <h3>整體辦理進度</h3>
+      <div class="progress-bar">
+        <div class="fill" style="width: 0%"></div>
+      </div>
+      <div class="progress-text">0 / 5 完成 (0%)</div>
+    </div>
+
+    <!-- 五大證件清單 -->
+    <div class="checklist-item doc-card" data-index="0">
+      <div class="doc-number">1</div>
+      <div class="check-box"></div>
+      <div class="doc-info">
+        <div class="doc-title">出生證明</div>
+        <div class="doc-title-en">Birth Certificate</div>
+        <span class="doc-estimate estimate-short">預估 1–2 週</span>
+        <div class="doc-desc">在醫院填寫出生登記表，由所在郡（County）的 Vital Records 部門核發正式出生證明。建議多申請幾份認證副本，後續辦護照、戶籍都會用到。</div>
+      </div>
+    </div>
+
+    <div class="checklist-item doc-card" data-index="1">
+      <div class="doc-number">2</div>
+      <div class="check-box"></div>
+      <div class="doc-info">
+        <div class="doc-title">社會安全號碼</div>
+        <div class="doc-title-en">Social Security Number (SSN)</div>
+        <span class="doc-estimate estimate-medium">預估 2–4 週</span>
+        <div class="doc-desc">出生登記時勾選「同時申請 SSN」，社會安全局（SSA）會將 SSN 卡郵寄到你在美國的地址。這是寶寶在美國的身份識別號碼，日後報稅、開戶都需要。</div>
+      </div>
+    </div>
+
+    <div class="checklist-item doc-card" data-index="2">
+      <div class="doc-number">3</div>
+      <div class="check-box"></div>
+      <div class="doc-info">
+        <div class="doc-title">美國護照</div>
+        <div class="doc-title-en">US Passport</div>
+        <span class="doc-estimate estimate-long">預估 4–6 週</span>
+        <div class="doc-desc">需備齊出生證明正本、父母雙方護照、寶寶護照照片（2x2 吋），至郵局或護照辦事處（Passport Acceptance Facility）申請。父母須同時到場簽名。可加急處理（額外費用）。</div>
+      </div>
+    </div>
+
+    <div class="checklist-item doc-card" data-index="3">
+      <div class="doc-number">4</div>
+      <div class="check-box"></div>
+      <div class="doc-info">
+        <div class="doc-title">台灣護照</div>
+        <div class="doc-title-en">Republic of China (Taiwan) Passport</div>
+        <span class="doc-estimate estimate-short">預估 1–2 週</span>
+        <div class="doc-desc">至駐洛杉磯台北經濟文化辦事處（TECO Los Angeles）申辦。需備妥美國出生證明、父母護照、戶籍謄本、寶寶照片等。辦事處可同時辦理出生證明的文件驗證。</div>
+      </div>
+    </div>
+
+    <div class="checklist-item doc-card" data-index="4">
+      <div class="doc-number">5</div>
+      <div class="check-box"></div>
+      <div class="doc-info">
+        <div class="doc-title">台灣戶籍登記</div>
+        <div class="doc-title-en">Taiwan Household Registration</div>
+        <span class="doc-estimate estimate-variable">回台後辦理</span>
+        <div class="doc-desc">回台後持經駐外館處認證的美國出生證明，至戶政事務所辦理出生登記及戶籍登記。完成後寶寶即取得中華民國國籍及身分證字號，可辦理健保等福利。</div>
+      </div>
+    </div>
+
+    <!-- 提示框 -->
+    <div class="info-box tip" style="margin-top: 32px;">
+      <strong>辦理順序很重要！</strong><br>
+      建議依照上方 1→5 的順序辦理。出生證明是所有後續證件的基礎文件；SSN 雖然獨立寄送，但建議在出生登記時就一併申請；美國護照需要出生證明才能辦；台灣護照需要美國出生證明的認證本；最後回台辦戶籍登記時，所有文件都要備齊。<strong>每份證件多準備 2–3 份副本</strong>，以備不時之需。
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>臣邑創昱移民顧問 &copy; 2026 ｜ AI 實戰培訓課程成果展示</p>
+  </footer>
+
+  <script src="../js/main.js"></script>
+  <script>
+    // 出生日期計算功能
+    const birthDateInput = document.getElementById('birthDate');
+    const daysSinceEl = document.getElementById('daysSince');
+    const dayCountEl = document.getElementById('dayCount');
+
+    // 載入已儲存的出生日期
+    const savedBirthDate = localStorage.getItem('baby-birth-date');
+    if (savedBirthDate) {
+      birthDateInput.value = savedBirthDate;
+      updateDaysSince();
+    }
+
+    birthDateInput.addEventListener('change', () => {
+      localStorage.setItem('baby-birth-date', birthDateInput.value);
+      updateDaysSince();
+    });
+
+    function updateDaysSince() {
+      const dateVal = birthDateInput.value;
+      if (!dateVal) {
+        daysSinceEl.style.display = 'none';
+        return;
+      }
+
+      const birthDate = new Date(dateVal);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      birthDate.setHours(0, 0, 0, 0);
+
+      const diffTime = today - birthDate;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays >= 0) {
+        dayCountEl.textContent = diffDays;
+        daysSinceEl.style.display = 'block';
+      } else {
+        daysSinceEl.style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>

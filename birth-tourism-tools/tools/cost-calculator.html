@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>費用試算器 — 赴美生子工具箱</title>
+  <meta name="description" content="赴美生子費用試算器：輸入待產天數、房型、陪產人數，即時計算完整費用明細，支援 USD / TWD 幣別切換。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    /* 頁面專屬樣式 */
+    .calc-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+
+    .calc-inputs {
+      position: sticky;
+      top: 80px;
+    }
+
+    .input-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+    }
+
+    .input-card h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: var(--text-white);
+    }
+
+    /* Radio 按鈕群組 */
+    .radio-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    .radio-option {
+      flex: 1;
+      position: relative;
+    }
+
+    .radio-option input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .radio-option label {
+      display: block;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      color: var(--text-gray);
+      font-size: 14px;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .radio-option label .price-hint {
+      display: block;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .radio-option input[type="radio"]:checked + label {
+      border-color: var(--primary);
+      background: rgba(0, 212, 255, 0.08);
+      color: var(--primary);
+    }
+
+    .radio-option input[type="radio"]:checked + label .price-hint {
+      color: var(--primary);
+      opacity: 0.7;
+    }
+
+    /* 結果區塊 */
+    .calc-results {
+      min-width: 0;
+    }
+
+    .total-banner {
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(255, 182, 193, 0.1));
+      border: 1px solid var(--border-hover);
+      border-radius: var(--radius);
+      padding: 32px;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .total-banner .label {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .total-banner .amount {
+      font-size: 42px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--baby-pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .total-banner .sub-amount {
+      font-size: 16px;
+      color: var(--text-gray);
+      margin-top: 8px;
+    }
+
+    /* 幣別切換列 */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .toolbar .title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    /* 明細表格內的分類標題列 */
+    .data-table .category-row td {
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding-top: 20px;
+      border-bottom: 1px solid rgba(0, 212, 255, 0.15);
+    }
+
+    .data-table .subtotal-row td {
+      font-weight: 600;
+      color: var(--baby-pink);
+      border-top: 1px solid rgba(255, 182, 193, 0.2);
+    }
+
+    /* 備註區 */
+    .notes-section {
+      margin-top: 32px;
+    }
+
+    .notes-section h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--text-gray);
+    }
+
+    /* RWD */
+    @media (max-width: 900px) {
+      .calc-section {
+        grid-template-columns: 1fr;
+      }
+
+      .calc-inputs {
+        position: static;
+      }
+
+      .total-banner .amount {
+        font-size: 32px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .radio-group {
+        flex-direction: column;
+      }
+
+      .total-banner .amount {
+        font-size: 26px;
+      }
+
+      .toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body data-page="cost-calculator">
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="container">
+      <div class="navbar-brand">
+        <span class="icon">💰</span>
+        <div>
+          <span>費用試算器</span><br>
+          <span class="subtitle">赴美生子工具箱</span>
+        </div>
+      </div>
+      <a href="../index.html" class="navbar-back">← 返回首頁</a>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>赴美生子費用試算器</h1>
+      <p>選擇待產天數、房型與生產方式，即時計算完整費用明細。支援美元 / 台幣切換。</p>
+    </div>
+
+    <!-- 主要內容：左輸入 右結果 -->
+    <div class="calc-section">
+
+      <!-- 左側：輸入區 -->
+      <div class="calc-inputs">
+        <div class="input-card">
+          <h2>基本資訊</h2>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="stayDays">待產天數</label>
+              <select id="stayDays">
+                <option value="30">30 天（約 1 個月）</option>
+                <option value="45">45 天（約 1.5 個月）</option>
+                <option value="60" selected>60 天（約 2 個月）</option>
+                <option value="90">90 天（約 3 個月）</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="companions">陪產人數</label>
+              <select id="companions">
+                <option value="0">0 人（媽媽獨自赴美）</option>
+                <option value="1" selected>1 人（老公陪產）</option>
+                <option value="2">2 人（老公 + 家人）</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>月子中心房型</label>
+            <div class="radio-group">
+              <div class="radio-option">
+                <input type="radio" name="roomType" id="roomStandard" value="3500">
+                <label for="roomStandard">
+                  標準房
+                  <span class="price-hint">$3,500 / 月</span>
+                </label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="roomType" id="roomDeluxe" value="5000" checked>
+                <label for="roomDeluxe">
+                  豪華房
+                  <span class="price-hint">$5,000 / 月</span>
+                </label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="roomType" id="roomVIP" value="7500">
+                <label for="roomVIP">
+                  VIP 套房
+                  <span class="price-hint">$7,500 / 月</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>生產方式</label>
+            <div class="radio-group">
+              <div class="radio-option">
+                <input type="radio" name="deliveryType" id="deliveryNatural" value="8000" checked>
+                <label for="deliveryNatural">
+                  自然產
+                  <span class="price-hint">$8,000</span>
+                </label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" name="deliveryType" id="deliveryCSection" value="15000">
+                <label for="deliveryCSection">
+                  剖腹產
+                  <span class="price-hint">$15,000</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 右側：結果區 -->
+      <div class="calc-results">
+
+        <!-- 總金額 -->
+        <div class="total-banner">
+          <div class="label">預估總費用</div>
+          <div class="amount" id="totalAmount">$0</div>
+          <div class="sub-amount" id="totalSub"></div>
+        </div>
+
+        <!-- 工具列：明細標題 + 幣別切換 -->
+        <div class="toolbar">
+          <span class="title">費用明細</span>
+          <div class="currency-toggle">
+            <button class="active" data-currency="USD">USD $</button>
+            <button data-currency="TWD">TWD NT$</button>
+          </div>
+        </div>
+
+        <!-- 明細表格 -->
+        <div class="result-card">
+          <table class="data-table" id="costTable">
+            <thead>
+              <tr>
+                <th>項目</th>
+                <th>說明</th>
+                <th style="text-align:right;">金額</th>
+              </tr>
+            </thead>
+            <tbody id="costTableBody">
+              <!-- JS 動態產生 -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 備註 -->
+        <div class="notes-section">
+          <h3>注意事項</h3>
+          <div class="info-box tip">
+            以上費用為預估值，實際費用依醫院帳單、月子中心合約為準。匯率以 1 USD = 31.5 TWD 計算，實際匯率請參考即時牌告。
+          </div>
+          <div class="info-box warning">
+            剖腹產費用可能因個人情況（緊急剖腹、麻醉追加等）有所增減。建議預留 10-15% 的緊急備用金。
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>臣邑創昱移民顧問 &copy; 2026 ｜ AI 實戰培訓課程成果展示</p>
+  </footer>
+
+  <script src="../js/main.js"></script>
+  <script>
+    // ===== 費用試算器邏輯 =====
+
+    // 當前幣別
+    let currentCurrency = 'USD';
+
+    // 固定費用項目（USD）
+    const FIXED_COSTS = {
+      ticketPerPerson: 1200,
+      pediatric: 1500,
+      insurance: 3000,
+      babyDocuments: 800,
+      dailyLiving: 50
+    };
+
+    // DOM 元素
+    const stayDaysEl = document.getElementById('stayDays');
+    const companionsEl = document.getElementById('companions');
+    const totalAmountEl = document.getElementById('totalAmount');
+    const totalSubEl = document.getElementById('totalSub');
+    const costTableBody = document.getElementById('costTableBody');
+
+    // 取得選取的 radio 值
+    function getRadioValue(name) {
+      const el = document.querySelector(`input[name="${name}"]:checked`);
+      return el ? parseInt(el.value, 10) : 0;
+    }
+
+    // 取得生產方式文字
+    function getDeliveryLabel() {
+      const el = document.querySelector('input[name="deliveryType"]:checked');
+      return el && el.id === 'deliveryCSection' ? '剖腹產' : '自然產';
+    }
+
+    // 取得房型文字
+    function getRoomLabel() {
+      const val = getRadioValue('roomType');
+      if (val === 3500) return '標準房';
+      if (val === 7500) return 'VIP 套房';
+      return '豪華房';
+    }
+
+    // 格式化金額
+    function fmtMoney(usd) {
+      const value = convertCurrency(usd, currentCurrency);
+      const sym = currencySymbol(currentCurrency);
+      return sym + formatNumber(value);
+    }
+
+    // 主要計算函數
+    function calculate() {
+      const days = parseInt(stayDaysEl.value, 10);
+      const companions = parseInt(companionsEl.value, 10);
+      const roomRate = getRadioValue('roomType');
+      const deliveryCost = getRadioValue('deliveryType');
+
+      // 計算各項費用
+      const totalPeople = 1 + companions; // 媽媽 + 陪產人
+      const ticketCost = FIXED_COSTS.ticketPerPerson * totalPeople;
+      const months = days / 30;
+      const confinementCost = Math.round(roomRate * months);
+      const livingCost = FIXED_COSTS.dailyLiving * days;
+
+      // 費用明細陣列
+      const items = [
+        {
+          category: '交通',
+          rows: [
+            {
+              name: '來回機票',
+              desc: `${totalPeople} 人 x $${formatNumber(FIXED_COSTS.ticketPerPerson)}`,
+              usd: ticketCost
+            }
+          ]
+        },
+        {
+          category: '住宿',
+          rows: [
+            {
+              name: `月子中心（${getRoomLabel()}）`,
+              desc: `$${formatNumber(roomRate)}/月 x ${months.toFixed(1)} 個月`,
+              usd: confinementCost
+            }
+          ]
+        },
+        {
+          category: '醫療',
+          rows: [
+            {
+              name: `醫院生產費（${getDeliveryLabel()}）`,
+              desc: getDeliveryLabel() === '剖腹產' ? '含手術、麻醉、住院' : '含產房、醫師接生',
+              usd: deliveryCost
+            },
+            {
+              name: '小兒科檢查',
+              desc: '新生兒檢查、疫苗',
+              usd: FIXED_COSTS.pediatric
+            },
+            {
+              name: '海外生育保險',
+              desc: '孕產婦 + 新生兒保障',
+              usd: FIXED_COSTS.insurance
+            }
+          ]
+        },
+        {
+          category: '證件與生活',
+          rows: [
+            {
+              name: '寶寶證件辦理',
+              desc: '出生證明 + SSN + 護照',
+              usd: FIXED_COSTS.babyDocuments
+            },
+            {
+              name: '生活雜費',
+              desc: `$${FIXED_COSTS.dailyLiving}/天 x ${days} 天`,
+              usd: livingCost
+            }
+          ]
+        }
+      ];
+
+      // 計算總額
+      let grandTotal = 0;
+      items.forEach(cat => {
+        cat.rows.forEach(row => {
+          grandTotal += row.usd;
+        });
+      });
+
+      // 渲染表格
+      renderTable(items, grandTotal);
+
+      // 更新總金額
+      totalAmountEl.textContent = fmtMoney(grandTotal);
+
+      // 顯示另一幣別
+      if (currentCurrency === 'USD') {
+        const twdVal = convertCurrency(grandTotal, 'TWD');
+        totalSubEl.textContent = `約 NT$${formatNumber(twdVal)}`;
+      } else {
+        totalSubEl.textContent = `約 $${formatNumber(grandTotal)} USD`;
+      }
+    }
+
+    // 渲染明細表格
+    function renderTable(items, grandTotal) {
+      let html = '';
+
+      items.forEach(cat => {
+        // 分類標題列
+        html += `<tr class="category-row"><td colspan="3">${cat.category}</td></tr>`;
+
+        let subtotal = 0;
+        cat.rows.forEach(row => {
+          subtotal += row.usd;
+          html += `
+            <tr>
+              <td>${row.name}</td>
+              <td style="color:var(--text-muted);">${row.desc}</td>
+              <td style="text-align:right; font-family:var(--font-mono); font-weight:600;">${fmtMoney(row.usd)}</td>
+            </tr>`;
+        });
+
+        // 小計列
+        html += `
+          <tr class="subtotal-row">
+            <td colspan="2" style="text-align:right;">小計</td>
+            <td style="text-align:right; font-family:var(--font-mono);">${fmtMoney(subtotal)}</td>
+          </tr>`;
+      });
+
+      // 總計列
+      html += `
+        <tr class="total-row">
+          <td colspan="2" style="text-align:right;">預估總費用</td>
+          <td style="text-align:right; font-family:var(--font-mono);">${fmtMoney(grandTotal)}</td>
+        </tr>`;
+
+      costTableBody.innerHTML = html;
+    }
+
+    // 幣別切換
+    document.querySelectorAll('.currency-toggle button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.currency-toggle button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentCurrency = btn.dataset.currency;
+        calculate();
+      });
+    });
+
+    // 監聽所有輸入變化 — 即時計算
+    stayDaysEl.addEventListener('change', calculate);
+    companionsEl.addEventListener('change', calculate);
+    document.querySelectorAll('input[name="roomType"]').forEach(el => {
+      el.addEventListener('change', calculate);
+    });
+    document.querySelectorAll('input[name="deliveryType"]').forEach(el => {
+      el.addEventListener('change', calculate);
+    });
+
+    // 初始計算
+    document.addEventListener('DOMContentLoaded', () => {
+      calculate();
+    });
+  </script>
+
+</body>
+</html>

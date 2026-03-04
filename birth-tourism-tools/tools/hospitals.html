@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>合作醫院介紹 — 赴美生子工具箱</title>
+  <meta name="description" content="瀏覽美國合作醫院和婦產科醫生的詳細介紹，包含專長、語言能力、經驗年資和費用參考。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    /* === 醫院頁面專用樣式 === */
+
+    .filter-section {
+      margin-bottom: 32px;
+    }
+
+    .filter-section .filter-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .filter-group {
+      flex: 1;
+      min-width: 240px;
+    }
+
+    /* 醫院卡片 */
+    .hospital-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .hospital-card:hover {
+      border-color: var(--border-hover);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .hospital-header {
+      padding: 28px 28px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hospital-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .hospital-info {
+      flex: 1;
+    }
+
+    .hospital-name {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-white);
+      margin-bottom: 6px;
+    }
+
+    .hospital-location {
+      font-size: 14px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hospital-type {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      background: rgba(0, 212, 255, 0.1);
+      color: var(--primary);
+      border: 1px solid rgba(0, 212, 255, 0.2);
+    }
+
+    .hospital-feature {
+      font-size: 14px;
+      color: var(--text-gray);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .hospital-pricing {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .price-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    .price-label {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .price-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--baby-pink);
+      font-family: var(--font-mono);
+    }
+
+    /* 展開按鈕 */
+    .toggle-doctors {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 14px;
+      background: rgba(0, 212, 255, 0.04);
+      border: none;
+      color: var(--primary);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .toggle-doctors:hover {
+      background: rgba(0, 212, 255, 0.08);
+    }
+
+    .toggle-doctors .arrow-icon {
+      transition: transform 0.3s ease;
+      font-size: 12px;
+    }
+
+    .hospital-card.expanded .toggle-doctors .arrow-icon {
+      transform: rotate(180deg);
+    }
+
+    /* 醫生區塊 */
+    .doctors-panel {
+      display: none;
+      padding: 0 28px 28px;
+    }
+
+    .hospital-card.expanded .doctors-panel {
+      display: block;
+    }
+
+    .doctors-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .doctor-card {
+      background: var(--bg-card-hover);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      transition: var(--transition);
+    }
+
+    .doctor-card:hover {
+      border-color: rgba(255, 182, 193, 0.3);
+      box-shadow: 0 4px 20px rgba(255, 182, 193, 0.08);
+    }
+
+    .doctor-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--baby-pink));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--bg-deep);
+      margin-bottom: 14px;
+      flex-shrink: 0;
+    }
+
+    .doctor-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-white);
+      margin-bottom: 4px;
+    }
+
+    .doctor-specialty {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    .doctor-details {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .doctor-detail {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-gray);
+    }
+
+    .doctor-detail .detail-icon {
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .doctor-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    /* 統計數字 */
+    .stats-bar {
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+      padding: 20px 0 8px;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--baby-pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* 無結果 */
+    .no-results {
+      text-align: center;
+      padding: 60px 0;
+      color: var(--text-muted);
+      display: none;
+    }
+
+    .no-results .no-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .no-results p {
+      font-size: 15px;
+    }
+
+    /* RWD */
+    @media (max-width: 768px) {
+      .hospital-header {
+        padding: 20px;
+      }
+
+      .hospital-top {
+        flex-direction: column;
+      }
+
+      .hospital-pricing {
+        flex-direction: column;
+      }
+
+      .price-item {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .doctors-panel {
+        padding: 0 20px 20px;
+      }
+
+      .doctors-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-bar {
+        gap: 24px;
+      }
+
+      .stat-value {
+        font-size: 22px;
+      }
+
+      .filter-row {
+        flex-direction: column;
+        gap: 16px;
+      }
+    }
+  </style>
+</head>
+<body data-page="hospitals">
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="container">
+      <div class="navbar-brand">
+        <span class="icon">🏥</span>
+        <div>
+          <span>合作醫院介紹</span><br>
+          <span class="subtitle">赴美生子工具箱</span>
+        </div>
+      </div>
+      <a href="../index.html" class="navbar-back">← 返回首頁</a>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="container">
+    <div class="page-header">
+      <h1>合作醫院 & 醫生介紹</h1>
+      <p>精選 4 家洛杉磯地區合作醫院，提供中文服務的婦產科醫生團隊，讓你安心待產。</p>
+
+      <!-- 統計 -->
+      <div class="stats-bar">
+        <div class="stat-item">
+          <div class="stat-value">4</div>
+          <div class="stat-label">合作醫院</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">5</div>
+          <div class="stat-label">合作醫生</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">65+</div>
+          <div class="stat-label">年總經驗</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">2000+</div>
+          <div class="stat-label">接生紀錄</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 篩選區 -->
+    <div class="filter-section">
+      <div class="filter-row">
+        <div class="filter-group">
+          <span class="filter-label">依地區篩選</span>
+          <div class="filter-tabs" id="region-filter">
+            <button class="filter-tab active" data-filter="all">全部</button>
+            <button class="filter-tab" data-filter="los-angeles">洛杉磯</button>
+            <button class="filter-tab" data-filter="irvine">爾灣</button>
+            <button class="filter-tab" data-filter="orange-county">橙縣</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">依語言篩選</span>
+          <div class="filter-tabs" id="language-filter">
+            <button class="filter-tab active" data-filter="all">全部</button>
+            <button class="filter-tab" data-filter="chinese">中文</button>
+            <button class="filter-tab" data-filter="english">英文</button>
+            <button class="filter-tab" data-filter="bilingual">雙語</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 醫院列表 -->
+    <div id="hospitals-list">
+
+      <!-- 醫院 1: Garfield Medical Center -->
+      <div class="hospital-card" data-region="los-angeles" data-languages="bilingual">
+        <div class="hospital-header">
+          <div class="hospital-top">
+            <div class="hospital-info">
+              <h2 class="hospital-name">Garfield Medical Center</h2>
+              <div class="hospital-location">
+                <span>📍</span> 洛杉磯 Monterey Park
+              </div>
+            </div>
+            <span class="hospital-type">綜合醫院</span>
+          </div>
+          <p class="hospital-feature">華人社區最大醫院，中文服務完善。從掛號、看診到住院，全程提供中文對應窗口，是赴美生子媽媽最安心的選擇。</p>
+          <div class="hospital-pricing">
+            <div class="price-item">
+              <span class="price-label">自然產</span>
+              <span class="price-value">$6,500</span>
+            </div>
+            <div class="price-item">
+              <span class="price-label">剖腹產</span>
+              <span class="price-value">$12,000</span>
+            </div>
+          </div>
+        </div>
+        <button class="toggle-doctors" onclick="toggleDoctors(this)">
+          <span>查看合作醫生</span>
+          <span class="arrow-icon">▼</span>
+        </button>
+        <div class="doctors-panel">
+          <div class="doctors-grid">
+
+            <!-- Dr. Lisa Chen -->
+            <div class="doctor-card" data-lang="bilingual">
+              <div class="doctor-avatar">LC</div>
+              <div class="doctor-name">Dr. Lisa Chen</div>
+              <div class="doctor-specialty">婦產科 Obstetrics & Gynecology</div>
+              <div class="doctor-details">
+                <div class="doctor-detail">
+                  <span class="detail-icon">🗣️</span>
+                  <span>中英雙語</span>
+                </div>
+                <div class="doctor-detail">
+                  <span class="detail-icon">⏱️</span>
+                  <span>15 年執業經驗</span>
+                </div>
+                <div class="doctor-detail">
+                  <span class="detail-icon">👶</span>
+                  <span>接生超過 2,000 位寶寶</span>
+                </div>
+              </div>
+              <div class="doctor-tags">
+                <span class="tag tag-cyan">雙語服務</span>
+                <span class="tag tag-pink">資深醫師</span>
+              </div>
+            </div>
+
+            <!-- Dr. James Wang -->
+            <div class="doctor-card" data-lang="bilingual">
+              <div class="doctor-avatar">JW</div>
+              <div class="doctor-name">Dr. James Wang</div>
+              <div class="doctor-specialty">婦產科 Obstetrics & Gynecology</div>
+              <div class="doctor-details">
+                <div class="doctor-detail">
+                  <span class="detail-icon">🗣️</span>
+                  <span>中英雙語</span>
+                </div>
+                <div class="doctor-detail">
+                  <span class="detail-icon">⏱️</span>
+                  <span>10 年執業經驗</span>
+                </div>
+                <div class="doctor-detail">
+                  <span class="detail-icon">👶</span>
+                  <span>經驗豐富、細心問診</span>
+                </div>
+              </div>
+              <div class="doctor-tags">
+                <span class="tag tag-cyan">雙語服務</span>
+                <span class="tag tag-green">親切細心</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- 醫院 2: Hoag Hospital -->
+      <div class="hospital-card" data-region="irvine" data-languages="english">
+        <div class="hospital-header">
+          <div class="hospital-top">
+            <div class="hospital-info">
+              <h2 class="hospital-name">Hoag Hospital</h2>
+              <div class="hospital-location">
+                <span>📍</span> 爾灣 Newport Beach
+              </div>
+            </div>
+            <span class="hospital-type">高端私立醫院</span>
+          </div>
+          <p class="hospital-feature">全美最佳婦產科排名前 50，環境優雅、設備頂級。適合追求高品質醫療服務的家庭，提供五星級的生產體驗。</p>
+          <div class="hospital-pricing">
+            <div class="price-item">
+              <span class="price-label">自然產</span>
+              <span class="price-value">$10,000</span>
+            </div>
+            <div class="price-item">
+              <span class="price-label">剖腹產</span>
+              <span class="price-value">$18,000</span>
+            </div>
+          </div>
+        </div>
+        <button class="toggle-doctors" onclick="toggleDoctors(this)">
+          <span>查看合作醫生</span>
+          <span class="arrow-icon">▼</span>
+        </button>
+        <div class="doctors-panel">
+          <div class="doctors-grid">
+
+            <!-- Dr. Sarah Miller -->
+            <div class="doctor-card" data-lang="english">
+              <div class="doctor-avatar">SM</div>
+              <div class="doctor-name">Dr. Sarah Miller</div>
+              <div class="doctor-specialty">婦產科 Obstetrics & Gynecology</div>
+              <div class="doctor-details">
+                <div class="doctor-detail">
+                  <span class="detail-icon">🗣️</span>
+                  <span>英文</span>
+                </div>
+                <div class="doctor-detail">
+                  <span class="detail-icon">⏱️</span>
+                  <span>20 年執業經驗</span>
+                </div>
+                <div class="doctor-detail">
+                  <span class="detail-icon">⚕️</span>
+                  <span>高危妊娠專家</span>
+                </div>
+              </div>
+              <div class="doctor-tags">
+                <span class="tag tag-orange">高危妊娠</span>
+                <span class="tag tag-pink">頂尖專家</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- 醫院 3: PIH Health Hospital -->
+      <div class="hospital-card" data-region="los-angeles" data-languages="bilingual">
+        <div class="hospital-header">
+          <div class="hospital-top">
+            <div class="hospital-info">
+              <h2 class="hospital-name">PIH Health Hospital</h2>
+              <div class="hospital-location">
+                <span>📍</span> 洛杉磯 Whittier
+              </div>
+            </div>
+            <span class="hospital-type">社區醫院</span>
+          </div>
+          <p class="hospital-feature">費用實惠、服務親切，社區型醫院的溫馨感。適合預算考量的家庭，醫療品質依然有保障。</p>
+          <div class="hospital-pricing">
+            <div class="price-item">
+              <span class="price-label">自然產</span>
+              <span class="price-value">$5,500</span>
+            </div>
+            <div class="price-item">
+              <span class="price-label">剖腹產</span>
+              <span class="price-value">$10,000</span>
+            </div>
+          </div>
+        </div>
+        <button class="toggle-doctors" onclick="toggleDoctors(this)">
+          <span>查看合作醫生</span>
+          <span class="arrow-icon">▼</span>
+        </button>
+        <div class="doctors-panel">
+          <div class="doctors-grid">
+
+            <!-- Dr. Kevin Lin -->
+            <div class="doctor-card" data-lang="bilingual">
+              <div class="doctor-avatar">KL</div>
+              <div class="doctor-name">Dr. Kevin Lin</div>
+              <div class="doctor-specialty">婦產科 Obstetrics & Gynecology</div>
+              <div class="doctor-details">
+                <div class="doctor-detail">
+                  <span class="detail-icon">🗣️</span>
+                  <span>中英雙語</span>
+                </div>
+                <div class="doctor-detail">
+                  <span class="detail-icon">⏱️</span>
+                  <span>12 年執業經驗</span>
+                </div>
+                <div class="doctor-detail">
+                  <span class="detail-icon">👶</span>
+                  <span>問診仔細、耐心溝通</span>
+                </div>
+              </div>
+              <div class="doctor-tags">
+                <span class="tag tag-cyan">雙語服務</span>
+                <span class="tag tag-green">高 CP 值</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- 醫院 4: St. Joseph Hospital -->
+      <div class="hospital-card" data-region="orange-county" data-languages="bilingual">
+        <div class="hospital-header">
+          <div class="hospital-top">
+            <div class="hospital-info">
+              <h2 class="hospital-name">St. Joseph Hospital</h2>
+              <div class="hospital-location">
+                <span>📍</span> 橙縣 Orange
+              </div>
+            </div>
+            <span class="hospital-type">天主教醫院</span>
+          </div>
+          <p class="hospital-feature">NICU 新生兒加護病房設備完善，萬一寶寶需要特殊照護也能即時處理。醫護團隊專業且富有愛心。</p>
+          <div class="hospital-pricing">
+            <div class="price-item">
+              <span class="price-label">自然產</span>
+              <span class="price-value">$8,000</span>
+            </div>
+            <div class="price-item">
+              <span class="price-label">剖腹產</span>
+              <span class="price-value">$15,000</span>
+            </div>
+          </div>
+        </div>
+        <button class="toggle-doctors" onclick="toggleDoctors(this)">
+          <span>查看合作醫生</span>
+          <span class="arrow-icon">▼</span>
+        </button>
+        <div class="doctors-panel">
+          <div class="doctors-grid">
+
+            <!-- Dr. Emily Huang -->
+            <div class="doctor-card" data-lang="bilingual">
+              <div class="doctor-avatar">EH</div>
+              <div class="doctor-name">Dr. Emily Huang</div>
+              <div class="doctor-specialty">婦產科 Obstetrics & Gynecology</div>
+              <div class="doctor-details">
+                <div class="doctor-detail">
+                  <span class="detail-icon">🗣️</span>
+                  <span>中英雙語</span>
+                </div>
+                <div class="doctor-detail">
+                  <span class="detail-icon">⏱️</span>
+                  <span>8 年執業經驗</span>
+                </div>
+                <div class="doctor-detail">
+                  <span class="detail-icon">⚕️</span>
+                  <span>微創手術專家</span>
+                </div>
+              </div>
+              <div class="doctor-tags">
+                <span class="tag tag-cyan">雙語服務</span>
+                <span class="tag tag-orange">微創手術</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 無結果 -->
+    <div class="no-results" id="no-results">
+      <span class="no-icon">🔍</span>
+      <p>沒有符合篩選條件的醫院，請調整篩選條件。</p>
+    </div>
+
+    <!-- 提示 -->
+    <div class="info-box tip">
+      <strong>提醒：</strong>以上費用為參考價格，實際費用依醫院當時報價為準。臣邑創昱移民顧問可協助您預約看診及確認最新收費。
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>臣邑創昱移民顧問 &copy; 2026 ｜ AI 實戰培訓課程成果展示</p>
+  </footer>
+
+  <script src="../js/main.js"></script>
+  <script>
+    // === 醫院頁面篩選邏輯 ===
+
+    // 目前的篩選狀態
+    let currentRegion = 'all';
+    let currentLanguage = 'all';
+
+    // 初始化地區篩選
+    initFilterTabs('region-filter', function(filter) {
+      currentRegion = filter;
+      applyFilters();
+    });
+
+    // 初始化語言篩選
+    initFilterTabs('language-filter', function(filter) {
+      currentLanguage = filter;
+      applyFilters();
+    });
+
+    // 套用篩選
+    function applyFilters() {
+      const cards = document.querySelectorAll('.hospital-card');
+      let visibleCount = 0;
+
+      cards.forEach(function(card) {
+        const region = card.dataset.region;
+        const languages = card.dataset.languages;
+
+        // 地區篩選
+        const regionMatch = currentRegion === 'all' || region === currentRegion;
+
+        // 語言篩選
+        let langMatch = currentLanguage === 'all';
+        if (!langMatch) {
+          // bilingual 同時符合 chinese 和 bilingual
+          if (currentLanguage === 'chinese') {
+            langMatch = languages === 'bilingual' || languages === 'chinese';
+          } else if (currentLanguage === 'english') {
+            langMatch = languages === 'english' || languages === 'bilingual';
+          } else if (currentLanguage === 'bilingual') {
+            langMatch = languages === 'bilingual';
+          }
+        }
+
+        if (regionMatch && langMatch) {
+          card.style.display = '';
+          visibleCount++;
+
+          // 淡入動畫
+          card.style.opacity = '0';
+          card.style.transform = 'translateY(10px)';
+          setTimeout(function() {
+            card.style.transition = 'all 0.4s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+          }, 50);
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      // 顯示/隱藏無結果提示
+      var noResults = document.getElementById('no-results');
+      noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+
+    // 展開/收合醫生面板
+    function toggleDoctors(btn) {
+      var card = btn.closest('.hospital-card');
+      card.classList.toggle('expanded');
+      var span = btn.querySelector('span:first-child');
+      if (card.classList.contains('expanded')) {
+        span.textContent = '收合醫生資訊';
+      } else {
+        span.textContent = '查看合作醫生';
+      }
+    }
+
+    // 頁面載入動畫
+    document.addEventListener('DOMContentLoaded', function() {
+      var cards = document.querySelectorAll('.hospital-card');
+      cards.forEach(function(card, i) {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(function() {
+          card.style.transition = 'all 0.5s ease';
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0)';
+        }, 150 + i * 100);
+      });
+    });
+  </script>
+</body>
+</html>

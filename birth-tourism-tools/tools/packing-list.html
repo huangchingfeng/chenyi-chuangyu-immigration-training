@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>行李清單產生器 — 赴美生子工具箱</title>
+  <meta name="description" content="根據季節、待產天數和陪產人數，自動生成客製化的赴美待產行李打包清單。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    /* === 行李清單頁面專屬樣式 === */
+    .input-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      margin-bottom: 32px;
+    }
+
+    .input-section h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: var(--text-white);
+    }
+
+    .generate-btn-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .season-hint {
+      font-size: 14px;
+      color: var(--baby-pink);
+      font-weight: 600;
+    }
+
+    /* 結果區 */
+    .result-area {
+      display: none;
+    }
+
+    .result-area.visible {
+      display: block;
+    }
+
+    .progress-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .progress-section h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text-white);
+    }
+
+    .progress-stats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .progress-stats .label {
+      font-size: 14px;
+      color: var(--text-gray);
+    }
+
+    /* 分類區塊 */
+    .category-section {
+      display: none;
+      margin-bottom: 32px;
+    }
+
+    .category-section.active {
+      display: block;
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .category-header .cat-icon {
+      font-size: 28px;
+    }
+
+    .category-header h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-white);
+    }
+
+    .category-header .cat-count {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-left: auto;
+    }
+
+    /* 新增項目 */
+    .add-item-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .add-item-row input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-deep);
+      color: var(--text-white);
+      font-size: 14px;
+      font-family: var(--font-sans);
+      transition: var(--transition);
+    }
+
+    .add-item-row input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+    }
+
+    .add-item-row input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .add-item-row .btn {
+      padding: 10px 16px;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    /* 刪除按鈕（自訂項目用） */
+    .checklist-item .delete-btn {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+      flex-shrink: 0;
+    }
+
+    .checklist-item .delete-btn:hover {
+      background: rgba(255, 107, 53, 0.15);
+      color: var(--accent);
+    }
+
+    /* 清單操作區 */
+    .list-actions {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    /* 季節提示標籤 */
+    .season-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .season-tag.spring { background: rgba(76, 175, 80, 0.15); color: #66BB6A; }
+    .season-tag.summer { background: rgba(255, 107, 53, 0.15); color: var(--accent); }
+    .season-tag.fall   { background: rgba(255, 152, 0, 0.15); color: #FFB74D; }
+    .season-tag.winter { background: rgba(0, 212, 255, 0.15); color: var(--primary); }
+
+    /* 空狀態 */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state .icon {
+      font-size: 56px;
+      display: block;
+      margin-bottom: 16px;
+    }
+
+    .empty-state p {
+      font-size: 16px;
+      line-height: 1.8;
+    }
+
+    @media (max-width: 768px) {
+      .input-section {
+        padding: 24px 16px;
+      }
+
+      .generate-btn-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .season-hint {
+        text-align: center;
+      }
+
+      .add-item-row {
+        flex-direction: column;
+      }
+
+      .list-actions {
+        flex-direction: column;
+      }
+
+      .list-actions .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body data-page="packing-list">
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="container">
+      <div class="navbar-brand">
+        <span class="icon">🧳</span>
+        <div>
+          <span>行李清單產生器</span><br>
+          <span class="subtitle">赴美生子工具箱</span>
+        </div>
+      </div>
+      <a href="../index.html" class="navbar-back">← 返回首頁</a>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>行李清單產生器</h1>
+      <p>根據出發季節、待產天數與是否有陪產家人，自動產生客製化的行李打包清單</p>
+    </div>
+
+    <!-- 輸入區 -->
+    <div class="input-section">
+      <h2>設定你的行程資訊</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="departMonth">預計出發月份</label>
+          <select id="departMonth">
+            <option value="">— 請選擇月份 —</option>
+            <option value="1">1 月</option>
+            <option value="2">2 月</option>
+            <option value="3">3 月</option>
+            <option value="4">4 月</option>
+            <option value="5">5 月</option>
+            <option value="6">6 月</option>
+            <option value="7">7 月</option>
+            <option value="8">8 月</option>
+            <option value="9">9 月</option>
+            <option value="10">10 月</option>
+            <option value="11">11 月</option>
+            <option value="12">12 月</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="stayDays">待產天數</label>
+          <select id="stayDays">
+            <option value="30">30 天</option>
+            <option value="45">45 天</option>
+            <option value="60" selected>60 天</option>
+            <option value="90">90 天</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="hasCompanion">有無陪產家人</label>
+          <select id="hasCompanion">
+            <option value="no">否，只有媽媽</option>
+            <option value="yes">是，有家人陪產</option>
+          </select>
+        </div>
+      </div>
+      <div class="generate-btn-row">
+        <button class="btn btn-primary" id="generateBtn">產生清單</button>
+        <span class="season-hint" id="seasonHint"></span>
+      </div>
+    </div>
+
+    <!-- 空狀態 -->
+    <div class="empty-state" id="emptyState">
+      <span class="icon">📦</span>
+      <p>選擇行程資訊後，點擊「產生清單」<br>系統會根據季節與需求產生專屬行李清單</p>
+    </div>
+
+    <!-- 結果區 -->
+    <div class="result-area" id="resultArea">
+
+      <!-- 進度條 -->
+      <div class="progress-section">
+        <h3>打包進度</h3>
+        <div class="progress-stats">
+          <span class="label" id="progressLabel">準備開始打包...</span>
+          <span class="progress-text"></span>
+        </div>
+        <div class="progress-bar">
+          <div class="fill" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- 操作按鈕 -->
+      <div class="list-actions">
+        <button class="btn btn-outline" id="resetBtn">重置全部勾選</button>
+        <button class="btn btn-outline" id="regenerateBtn">重新產生清單</button>
+      </div>
+
+      <!-- 季節提示 -->
+      <div id="seasonTag"></div>
+
+      <!-- Filter Tabs -->
+      <div class="filter-tabs" id="filterTabs"></div>
+
+      <!-- 分類區域（動態生成） -->
+      <div id="categorySections"></div>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>臣邑創昱移民顧問 &copy; 2026 ｜ AI 實戰培訓課程成果展示</p>
+  </footer>
+
+  <script src="../js/main.js"></script>
+  <script>
+  // ===== 行李清單產生器邏輯 =====
+  (() => {
+    // --- 資料定義 ---
+    const CATEGORIES = {
+      documents: {
+        icon: '📄',
+        name: '證件文件',
+        items: [
+          { title: '護照（正本＋影本各 2 份）', desc: '確認效期超過 6 個月' },
+          { title: '美國簽證影本', desc: 'B1/B2 簽證頁影印' },
+          { title: 'DS-160 確認頁', desc: '面試確認頁列印保存' },
+          { title: '醫療紀錄 / 產檢報告', desc: '英文版產檢紀錄、超音波報告' },
+          { title: '醫療保險文件', desc: '保險卡、保單號碼、理賠聯絡方式' },
+          { title: '現金（美金）+ 信用卡', desc: '建議攜帶 USD 2,000-3,000 現金' },
+          { title: '月子中心入住確認單', desc: '預訂確認信、地址、聯絡人' },
+          { title: '來回機票電子確認單', desc: '列印或手機截圖備用' },
+          { title: '台灣身份證影本', desc: '辦理寶寶證件時可能需要' },
+          { title: '戶籍謄本（英文版）', desc: '可至戶政事務所申請' }
+        ]
+      },
+      momClothes: {
+        icon: '👗',
+        name: '媽媽衣物',
+        getItems(season) {
+          const base = [
+            { title: '孕婦裝 3-5 套', desc: '舒適透氣、方便穿脫' },
+            { title: '哺乳衣 3-4 件', desc: '前開扣或側開設計' },
+            { title: '月子服 / 居家服 2-3 套', desc: '棉質寬鬆舒適' },
+            { title: '內衣褲（孕婦 / 哺乳）', desc: '哺乳內衣 3-4 件、免洗內褲備用' },
+            { title: '室內拖鞋', desc: '月子中心室內使用' },
+            { title: '外出鞋（好穿脫）', desc: '低跟防滑、產檢外出用' },
+            { title: '襪子 5-6 雙', desc: '月子期間保暖用' },
+            { title: '產後束腹帶', desc: '產後使用，可當地購買' }
+          ];
+          if (season === 'summer') {
+            base.push(
+              { title: '薄外套 / 防曬外套', desc: '室內冷氣強，室外需防曬' },
+              { title: '防曬用品', desc: '防曬乳、遮陽帽、太陽眼鏡' },
+              { title: '短袖短褲 2-3 套', desc: '加州夏天炎熱' }
+            );
+          } else if (season === 'winter') {
+            base.push(
+              { title: '羽絨衣 / 厚外套', desc: '洛杉磯冬天早晚溫差大' },
+              { title: '保暖衛生衣褲', desc: '怕冷的媽媽必備' },
+              { title: '圍巾 / 毛帽', desc: '外出保暖用' }
+            );
+          } else if (season === 'spring') {
+            base.push(
+              { title: '薄外套 / 針織衫', desc: '春天早晚涼，洋蔥式穿搭' },
+              { title: '長褲 2-3 件', desc: '彈性腰圍孕婦褲' }
+            );
+          } else {
+            base.push(
+              { title: '薄外套 + 厚外套各一', desc: '秋天溫差大，需備兩種厚度' },
+              { title: '長褲 2-3 件', desc: '彈性腰圍孕婦褲' }
+            );
+          }
+          return base;
+        }
+      },
+      babyItems: {
+        icon: '👶',
+        name: '寶寶用品',
+        items: [
+          { title: '新生兒衣服 x5', desc: '紗布衣 / 包屁衣（0-3M）' },
+          { title: '包巾 x2', desc: '純棉包巾，新生兒必備' },
+          { title: '嬰兒安全座椅', desc: '美國法規要求，可當地購買或租借' },
+          { title: '奶瓶 x2-3', desc: '可先帶少量，當地品牌選擇多' },
+          { title: '尿布（少量）', desc: '帶 1 小包即可，當地 Costco 買更便宜' },
+          { title: '濕紙巾 1 包', desc: '隨身攜帶，當地再補貨' },
+          { title: '嬰兒帽 x2', desc: '新生兒保暖用' },
+          { title: '嬰兒襪 x3-5 雙', desc: '小尺寸新生兒襪' },
+          { title: '小毯子 x1', desc: '輕薄透氣，回程飛機上用' },
+          { title: '奶嘴 x2', desc: '安撫用，可依需求攜帶' }
+        ]
+      },
+      dailyItems: {
+        icon: '🧴',
+        name: '生活用品',
+        items: [
+          { title: '盥洗用品', desc: '牙刷、牙膏、洗面乳（可帶旅行組）' },
+          { title: '洗髮精 / 沐浴乳', desc: '小瓶裝先用，當地再買大瓶' },
+          { title: '毛巾 x2', desc: '看月子中心是否提供' },
+          { title: '吹風機', desc: '確認月子中心是否提供，美國電壓 120V' },
+          { title: '萬用轉接頭', desc: '台灣插頭通常免轉，但三孔需轉接' },
+          { title: '延長線 / 排插', desc: '充電設備多時很實用' },
+          { title: '保溫瓶', desc: '月子期間喝熱水用' },
+          { title: '護膚品 / 乳液', desc: '美國氣候乾燥，保濕很重要' },
+          { title: '口罩', desc: '醫院產檢、搭機使用' },
+          { title: '指甲剪（嬰兒用）', desc: '新生兒指甲長很快' },
+          { title: '常用藥品', desc: '個人處方藥、腸胃藥、感冒藥' }
+        ]
+      },
+      electronics: {
+        icon: '📱',
+        name: '電子設備',
+        items: [
+          { title: '手機 + 充電器', desc: '充電線建議帶 2 條' },
+          { title: '筆電 / 平板', desc: '追劇、處理事務用' },
+          { title: '相機', desc: '記錄寶寶出生的珍貴時刻' },
+          { title: '行動電源', desc: '10,000mAh 以上，隨身不托運' },
+          { title: '萬用轉接頭（USB）', desc: '多孔 USB 充電器最方便' },
+          { title: '耳機', desc: '搭機、休息時使用' },
+          { title: '記憶卡 / 隨身碟', desc: '備份照片影片用' }
+        ]
+      }
+    };
+
+    const COMPANION_ITEMS = {
+      icon: '👨‍👩‍👧',
+      name: '陪產者',
+      items: [
+        { title: '陪產者護照＋簽證影本', desc: '確認簽證效期' },
+        { title: '衣物 5-7 套', desc: '依季節準備，當地可再購買' },
+        { title: '盥洗用品', desc: '牙刷、刮鬍刀等個人用品' },
+        { title: '拖鞋', desc: '室內使用' },
+        { title: '運動鞋', desc: '外出採買、散步用' },
+        { title: '個人藥品', desc: '處方藥記得帶' },
+        { title: '娛樂物品', desc: '書、筆電、Switch 等' },
+        { title: '駕照（台灣 + 國際駕照）', desc: '美國租車自駕用' }
+      ]
+    };
+
+    const SEASON_ICONS = { spring: '🌸', summer: '☀️', fall: '🍂', winter: '❄️' };
+
+    // --- 狀態 ---
+    let currentConfig = null;
+    let packingData = {}; // { categoryKey: [{ title, desc, checked, custom }] }
+
+    // --- DOM ---
+    const departMonth = document.getElementById('departMonth');
+    const stayDays = document.getElementById('stayDays');
+    const hasCompanion = document.getElementById('hasCompanion');
+    const generateBtn = document.getElementById('generateBtn');
+    const seasonHint = document.getElementById('seasonHint');
+    const emptyState = document.getElementById('emptyState');
+    const resultArea = document.getElementById('resultArea');
+    const filterTabs = document.getElementById('filterTabs');
+    const categorySections = document.getElementById('categorySections');
+    const resetBtn = document.getElementById('resetBtn');
+    const regenerateBtn = document.getElementById('regenerateBtn');
+    const seasonTagEl = document.getElementById('seasonTag');
+
+    // --- 事件 ---
+    departMonth.addEventListener('change', updateSeasonHint);
+    generateBtn.addEventListener('click', handleGenerate);
+    resetBtn.addEventListener('click', handleReset);
+    regenerateBtn.addEventListener('click', () => {
+      // 清除舊資料，重新產生
+      const pageId = document.body.dataset.page || 'default';
+      localStorage.removeItem(`packing-data-${pageId}`);
+      localStorage.removeItem(`packing-config-${pageId}`);
+      localStorage.removeItem(`checklist-${pageId}`);
+      handleGenerate();
+    });
+
+    // --- 初始化：載入上次設定 ---
+    initFromStorage();
+
+    function initFromStorage() {
+      const pageId = document.body.dataset.page || 'default';
+      const savedConfig = localStorage.getItem(`packing-config-${pageId}`);
+      const savedData = localStorage.getItem(`packing-data-${pageId}`);
+
+      if (savedConfig && savedData) {
+        currentConfig = JSON.parse(savedConfig);
+        packingData = JSON.parse(savedData);
+
+        // 還原表單值
+        departMonth.value = currentConfig.month;
+        stayDays.value = currentConfig.days;
+        hasCompanion.value = currentConfig.companion ? 'yes' : 'no';
+
+        updateSeasonHint();
+        renderResult();
+      }
+    }
+
+    function updateSeasonHint() {
+      const m = parseInt(departMonth.value);
+      if (!m) {
+        seasonHint.textContent = '';
+        return;
+      }
+      const s = getSeason(m);
+      const icon = SEASON_ICONS[s];
+      seasonHint.textContent = `${icon} 美國當地為${seasonName(s)}，衣物將依季節調整`;
+    }
+
+    function handleGenerate() {
+      const month = parseInt(departMonth.value);
+      if (!month) {
+        departMonth.focus();
+        departMonth.style.borderColor = 'var(--accent)';
+        setTimeout(() => { departMonth.style.borderColor = ''; }, 2000);
+        return;
+      }
+
+      const days = parseInt(stayDays.value);
+      const companion = hasCompanion.value === 'yes';
+      const season = getSeason(month);
+
+      currentConfig = { month, days, companion, season };
+
+      // 建構清單資料
+      packingData = {};
+
+      Object.keys(CATEGORIES).forEach(key => {
+        const cat = CATEGORIES[key];
+        let items;
+        if (typeof cat.getItems === 'function') {
+          items = cat.getItems(season);
+        } else {
+          items = [...cat.items];
+        }
+        packingData[key] = items.map(it => ({
+          title: it.title,
+          desc: it.desc,
+          checked: false,
+          custom: false
+        }));
+      });
+
+      // 陪產者
+      if (companion) {
+        packingData['companion'] = COMPANION_ITEMS.items.map(it => ({
+          title: it.title,
+          desc: it.desc,
+          checked: false,
+          custom: false
+        }));
+      }
+
+      // 依天數調整提示
+      if (days >= 60) {
+        // 加長期提示項目到生活用品
+        packingData.dailyItems.push({
+          title: '洗衣精（小瓶）',
+          desc: `待產 ${days} 天，建議自備或當地購買`,
+          checked: false,
+          custom: false
+        });
+      }
+      if (days >= 90) {
+        packingData.dailyItems.push({
+          title: '居家清潔用品',
+          desc: '長期住宿，基本清潔用品可當地採購',
+          checked: false,
+          custom: false
+        });
+      }
+
+      saveToStorage();
+      renderResult();
+    }
+
+    function renderResult() {
+      emptyState.style.display = 'none';
+      resultArea.classList.add('visible');
+
+      const season = currentConfig.season;
+
+      // 季節標籤
+      seasonTagEl.innerHTML = `
+        <span class="season-tag ${season}">
+          ${SEASON_ICONS[season]} 出發季節：${seasonName(season)}（${currentConfig.month} 月）
+          ｜待產 ${currentConfig.days} 天
+          ${currentConfig.companion ? '｜有陪產家人' : ''}
+        </span>
+      `;
+
+      // 建立分類順序
+      const categoryKeys = Object.keys(packingData);
+      const categoryMeta = {};
+      Object.keys(CATEGORIES).forEach(k => {
+        const c = CATEGORIES[k];
+        categoryMeta[k] = { icon: c.icon, name: c.name };
+      });
+      if (packingData['companion']) {
+        categoryMeta['companion'] = { icon: COMPANION_ITEMS.icon, name: COMPANION_ITEMS.name };
+      }
+
+      // Filter Tabs
+      filterTabs.innerHTML = `
+        <button class="filter-tab active" data-filter="all">全部</button>
+        ${categoryKeys.map(key => `
+          <button class="filter-tab" data-filter="${key}">${categoryMeta[key].icon} ${categoryMeta[key].name}</button>
+        `).join('')}
+      `;
+
+      // 分類內容
+      categorySections.innerHTML = '';
+      categoryKeys.forEach(key => {
+        const meta = categoryMeta[key];
+        const items = packingData[key];
+        const section = document.createElement('div');
+        section.className = 'category-section active';
+        section.dataset.category = key;
+
+        let itemsHtml = items.map((item, idx) => `
+          <div class="checklist-item" data-cat="${key}" data-idx="${idx}">
+            <div class="check-box"></div>
+            <div class="checklist-label">
+              <div class="title">${item.title}</div>
+              <div class="desc">${item.desc}</div>
+            </div>
+            ${item.custom ? `<button class="delete-btn" data-cat="${key}" data-idx="${idx}" title="刪除">&times;</button>` : ''}
+          </div>
+        `).join('');
+
+        section.innerHTML = `
+          <div class="category-header">
+            <span class="cat-icon">${meta.icon}</span>
+            <h3>${meta.name}</h3>
+            <span class="cat-count">${items.length} 項</span>
+          </div>
+          <div class="checklist-container" id="checklist-${key}">
+            ${itemsHtml}
+          </div>
+          <div class="add-item-row">
+            <input type="text" placeholder="新增自訂項目..." data-cat="${key}">
+            <button class="btn btn-outline add-custom-btn" data-cat="${key}">+ 新增</button>
+          </div>
+        `;
+
+        categorySections.appendChild(section);
+      });
+
+      // 恢復勾選狀態
+      restoreCheckedState();
+
+      // 綁定事件
+      bindChecklistEvents();
+      bindFilterEvents();
+      bindAddItemEvents();
+      bindDeleteEvents();
+
+      updatePackingProgress();
+    }
+
+    function restoreCheckedState() {
+      document.querySelectorAll('.checklist-item').forEach(el => {
+        const cat = el.dataset.cat;
+        const idx = parseInt(el.dataset.idx);
+        if (packingData[cat] && packingData[cat][idx] && packingData[cat][idx].checked) {
+          el.classList.add('checked');
+        }
+      });
+    }
+
+    function bindChecklistEvents() {
+      document.querySelectorAll('.checklist-item').forEach(el => {
+        el.addEventListener('click', (e) => {
+          // 忽略刪除按鈕點擊
+          if (e.target.closest('.delete-btn')) return;
+
+          el.classList.toggle('checked');
+          const cat = el.dataset.cat;
+          const idx = parseInt(el.dataset.idx);
+          if (packingData[cat] && packingData[cat][idx]) {
+            packingData[cat][idx].checked = el.classList.contains('checked');
+          }
+          saveToStorage();
+          updatePackingProgress();
+        });
+      });
+    }
+
+    function bindFilterEvents() {
+      filterTabs.querySelectorAll('.filter-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          filterTabs.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+
+          const filter = tab.dataset.filter;
+          document.querySelectorAll('.category-section').forEach(sec => {
+            if (filter === 'all' || sec.dataset.category === filter) {
+              sec.classList.add('active');
+            } else {
+              sec.classList.remove('active');
+            }
+          });
+        });
+      });
+    }
+
+    function bindAddItemEvents() {
+      document.querySelectorAll('.add-custom-btn').forEach(btn => {
+        const cat = btn.dataset.cat;
+        const input = btn.parentElement.querySelector('input');
+
+        const addItem = () => {
+          const val = input.value.trim();
+          if (!val) return;
+
+          packingData[cat].push({
+            title: val,
+            desc: '自訂項目',
+            checked: false,
+            custom: true
+          });
+
+          input.value = '';
+          saveToStorage();
+          renderResult();
+        };
+
+        btn.addEventListener('click', addItem);
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') addItem();
+        });
+      });
+    }
+
+    function bindDeleteEvents() {
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const cat = btn.dataset.cat;
+          const idx = parseInt(btn.dataset.idx);
+
+          packingData[cat].splice(idx, 1);
+          saveToStorage();
+          renderResult();
+        });
+      });
+    }
+
+    function updatePackingProgress() {
+      let total = 0;
+      let checked = 0;
+
+      Object.values(packingData).forEach(items => {
+        items.forEach(it => {
+          total++;
+          if (it.checked) checked++;
+        });
+      });
+
+      const pct = total === 0 ? 0 : Math.round((checked / total) * 100);
+
+      const fill = document.querySelector('.progress-bar .fill');
+      const text = document.querySelector('.progress-text');
+      const label = document.getElementById('progressLabel');
+
+      if (fill) fill.style.width = pct + '%';
+      if (text) text.textContent = `${checked} / ${total} 完成 (${pct}%)`;
+
+      if (label) {
+        if (pct === 0) label.textContent = '準備開始打包吧！';
+        else if (pct < 30) label.textContent = '加油，繼續打包中...';
+        else if (pct < 60) label.textContent = '已經過半了，很棒！';
+        else if (pct < 90) label.textContent = '快完成了，再加把勁！';
+        else if (pct < 100) label.textContent = '最後幾樣了！';
+        else label.textContent = '全部準備完成，可以出發了！';
+      }
+
+      // 更新各分類計數
+      document.querySelectorAll('.category-section').forEach(sec => {
+        const cat = sec.dataset.category;
+        if (packingData[cat]) {
+          const countEl = sec.querySelector('.cat-count');
+          const catChecked = packingData[cat].filter(it => it.checked).length;
+          const catTotal = packingData[cat].length;
+          if (countEl) {
+            countEl.textContent = `${catChecked} / ${catTotal} 項`;
+          }
+        }
+      });
+    }
+
+    function handleReset() {
+      if (!confirm('確定要重置所有勾選？已打包的項目將全部取消。')) return;
+
+      Object.values(packingData).forEach(items => {
+        items.forEach(it => { it.checked = false; });
+      });
+
+      document.querySelectorAll('.checklist-item').forEach(el => {
+        el.classList.remove('checked');
+      });
+
+      saveToStorage();
+      updatePackingProgress();
+    }
+
+    function saveToStorage() {
+      const pageId = document.body.dataset.page || 'default';
+      localStorage.setItem(`packing-config-${pageId}`, JSON.stringify(currentConfig));
+      localStorage.setItem(`packing-data-${pageId}`, JSON.stringify(packingData));
+    }
+  })();
+  </script>
+
+</body>
+</html>

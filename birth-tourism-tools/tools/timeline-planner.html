@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>時程規劃表 — 赴美生子工具箱</title>
+  <meta name="description" content="輸入預產期，自動倒推簽證、出發、待產、生產、證件辦理到回台的完整時間軸。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    /* 頁面專屬樣式 */
+    .input-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      margin-bottom: 40px;
+    }
+
+    .input-section .form-row {
+      align-items: end;
+    }
+
+    .timeline-wrapper {
+      display: none;
+      animation: fadeInUp 0.5s ease;
+    }
+
+    .timeline-wrapper.visible {
+      display: block;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .timeline-item {
+      transition: var(--transition);
+    }
+
+    .timeline-item:hover {
+      transform: translateX(4px);
+    }
+
+    .timeline-item h4 .step-number {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      line-height: 24px;
+      text-align: center;
+      border-radius: 50%;
+      background: var(--primary);
+      color: var(--bg-deep);
+      font-size: 12px;
+      font-weight: 700;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    .timeline-item .detail ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .timeline-item .detail ul li {
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .timeline-item .detail ul li:last-child {
+      border-bottom: none;
+    }
+
+    .timeline-item .detail ul li .check-icon {
+      color: var(--primary);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .timeline-item .detail .tip-box {
+      margin-top: 12px;
+      padding: 12px 16px;
+      background: rgba(0, 212, 255, 0.06);
+      border-left: 3px solid var(--primary);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .timeline-item .detail .warning-box {
+      margin-top: 12px;
+      padding: 12px 16px;
+      background: rgba(255, 107, 53, 0.06);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .timeline-item .tag {
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .timeline-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .summary-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .summary-card .label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .summary-card .value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .summary-card .value.pink {
+      color: var(--baby-pink);
+    }
+
+    .summary-card .value.orange {
+      color: var(--accent);
+    }
+
+    .toggle-hint {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    /* 點擊展開指標 */
+    .timeline-item .expand-icon {
+      float: right;
+      font-size: 14px;
+      color: var(--text-muted);
+      transition: var(--transition);
+    }
+
+    .timeline-item.open .expand-icon {
+      transform: rotate(90deg);
+      color: var(--primary);
+    }
+
+    /* 列印 */
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    @media print {
+      .navbar, .input-section, .btn-group, .toggle-hint, .footer { display: none; }
+      .timeline-wrapper { display: block !important; }
+      .timeline-item .detail { display: block !important; }
+      body { background: #fff; color: #333; }
+      .timeline::before { background: #ccc; }
+      .timeline-item::before { background: #666; border-color: #fff; }
+      .summary-card { border: 1px solid #ddd; }
+      .summary-card .value, .summary-card .value.pink, .summary-card .value.orange { color: #333; }
+    }
+  </style>
+</head>
+<body data-page="timeline-planner">
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="container">
+      <div class="navbar-brand">
+        <span class="icon">📅</span>
+        <div>
+          <span>時程規劃表</span><br>
+          <span class="subtitle">赴美生子工具箱</span>
+        </div>
+      </div>
+      <a href="../index.html" class="navbar-back">← 返回首頁</a>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>赴美生子時程規劃表</h1>
+      <p>輸入預產期，自動倒推從準備到回台的完整時間軸，掌握每個關鍵節點。</p>
+    </div>
+
+    <!-- 輸入區 -->
+    <div class="input-section">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="due-date">預產期 (EDD)</label>
+          <input type="date" id="due-date">
+        </div>
+        <div class="form-group">
+          <button class="btn btn-primary" id="btn-generate" onclick="generateTimeline()">
+            產生時程規劃表
+          </button>
+        </div>
+      </div>
+      <div class="info-box tip" style="margin-top: 16px; margin-bottom: 0;">
+        選擇預產期後，系統將自動計算 8 個關鍵節點的建議日期，幫助你有條不紊地準備赴美生子之旅。
+      </div>
+    </div>
+
+    <!-- 時程結果 -->
+    <div class="timeline-wrapper" id="timeline-result">
+
+      <!-- 摘要卡片 -->
+      <div class="timeline-summary" id="summary-cards"></div>
+
+      <p class="toggle-hint">點擊各節點可展開 / 收合詳細說明</p>
+
+      <!-- 時間軸 -->
+      <div class="timeline" id="timeline-container"></div>
+
+      <!-- 操作按鈕 -->
+      <div class="btn-group">
+        <button class="btn btn-outline" onclick="expandAll()">展開全部</button>
+        <button class="btn btn-outline" onclick="collapseAll()">收合全部</button>
+        <button class="btn btn-pink" onclick="window.print()">列印 / 存 PDF</button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>臣邑創昱移民顧問 &copy; 2026 ｜ AI 實戰培訓課程成果展示</p>
+  </footer>
+
+  <script src="../js/main.js"></script>
+  <script>
+    // 8 個時程節點資料
+    const MILESTONES = [
+      {
+        id: 1,
+        title: '開始準備',
+        offset: -180, // 預產期 - 6 個月
+        icon: '📋',
+        tag: { text: '準備期', class: 'tag-cyan' },
+        items: [
+          '了解赴美生子整體流程與法律規範',
+          '評估家庭財務狀況，設定預算範圍',
+          '收集月子中心、醫院、保險等資訊',
+          '確認護照效期（至少 6 個月以上）',
+          '準備存款證明、工作在職證明等文件',
+          '諮詢專業移民顧問，確認計畫可行性'
+        ],
+        tip: '愈早開始準備愈從容。建議同時整理好財力證明（存款餘額建議 50 萬台幣以上），有助於後續簽證面試。'
+      },
+      {
+        id: 2,
+        title: '辦理簽證',
+        offset: -150, // 預產期 - 5 個月
+        icon: '🛂',
+        tag: { text: '簽證', class: 'tag-orange' },
+        items: [
+          '填寫 DS-160 線上簽證申請表',
+          '預約 AIT 美國在台協會面試時段',
+          '準備面試所需文件：護照、照片、DS-160 確認頁',
+          '準備財力證明：存款證明、薪資單、房產證明',
+          '準備工作證明：在職證明、名片、公司登記',
+          '準備旅行計畫：醫院預約、月子中心訂單、回程機票',
+          '練習面試問答（如實告知赴美目的）'
+        ],
+        tip: '面試時請如實說明赴美生子目的，並準備好已付清或有能力支付醫療費用的證明。美國法律並不禁止赴美生子，誠實是最好的策略。',
+        warning: '避免使用旅遊簽證卻不提赴美生子目的，這可能構成簽證詐欺，影響未來入境。'
+      },
+      {
+        id: 3,
+        title: '訂機票 + 住宿',
+        offset: -120, // 預產期 - 4 個月
+        icon: '✈️',
+        tag: { text: '預訂', class: 'tag-pink' },
+        items: [
+          '確認月子中心並支付訂金',
+          '購買去程機票（建議選可改期的票種）',
+          '購買赴美生子專用保險或確認保險方案',
+          '預約美國產檢醫生（OB/GYN）',
+          '確認住宿地點與交通方式',
+          '開始辦理國際駕照（如需自駕）'
+        ],
+        tip: '機票建議選擇可免費改期的票種，因為預產期可能會提前或延後。航空公司通常允許孕婦 36 週前搭機。'
+      },
+      {
+        id: 4,
+        title: '出發赴美',
+        offset: -60, // 預產期 - 2 個月
+        icon: '🛫',
+        tag: { text: '出發', class: 'tag-orange' },
+        items: [
+          '確認護照、簽證、機票、保險文件齊全',
+          '攜帶所有醫療紀錄和產檢報告（英文版）',
+          '準備入境時的文件：醫院預約確認、月子中心合約、回程機票',
+          '準備足夠現金和信用卡',
+          '確認手機國際漫遊或購買美國 SIM 卡',
+          '整理行李（參考行李清單工具）',
+          '注意航空公司孕婦搭機規定（通常 36 週前可搭機）'
+        ],
+        warning: '入境時海關可能詢問赴美目的、停留時間、財力證明。請如實回答，並準備好所有支持文件。切勿攜帶超過 1 萬美元現金未申報。'
+      },
+      {
+        id: 5,
+        title: '待產期',
+        offsetStart: -60, // 預產期 - 2 個月
+        offsetEnd: 0,
+        icon: '🤰',
+        tag: { text: '待產', class: 'tag-pink' },
+        isRange: true,
+        items: [
+          '抵達後盡快至預約醫生進行首次產檢',
+          '每 2 週定期產檢，了解寶寶狀況',
+          '熟悉月子中心環境與周邊生活機能',
+          '確認醫院位置與緊急就醫路線',
+          '準備待產包（住院所需物品）',
+          '與醫生討論生產方式偏好（自然產 / 剖腹產）',
+          '適當散步、保持良好作息'
+        ],
+        tip: '美國產檢頻率通常為孕中期每 4 週、孕晚期每 2 週、最後一個月每週。記得每次產檢結果都保留好紀錄。'
+      },
+      {
+        id: 6,
+        title: '生產',
+        offset: 0,
+        icon: '👶',
+        tag: { text: '預產期', class: 'tag-green' },
+        items: [
+          '出現產兆時通知醫生並前往醫院',
+          '攜帶護照、保險卡、待產包',
+          '自然產住院約 1-2 天，剖腹產約 3-4 天',
+          '出院前確認寶寶出生證明 (Birth Certificate) 申請',
+          '確認醫院帳單和保險理賠事宜',
+          '通知家人報平安'
+        ],
+        tip: '醫院通常會在出院前協助填寫出生證明申請表。務必確認寶寶的英文名字拼寫正確，因為後續所有證件都以此為準。'
+      },
+      {
+        id: 7,
+        title: '坐月子 + 辦證件',
+        offsetStart: 0,
+        offsetEnd: 30,
+        icon: '📑',
+        tag: { text: '證件', class: 'tag-cyan' },
+        isRange: true,
+        items: [
+          '申請寶寶出生證明 (Birth Certificate) — 約 1-2 週',
+          '申請社會安全號碼 (SSN) — 通常出生登記時一併申請',
+          '申請寶寶美國護照 — 需父母雙方到場',
+          '到 TECO（駐美代表處）辦理台灣護照',
+          '辦理中華民國入國證明書',
+          '月子中心坐月子、調養身體',
+          '安排寶寶滿月疫苗接種'
+        ],
+        tip: '美國護照申請需要父母雙方帶寶寶到場。如果一方無法到場，需要公證授權書。建議出生後盡快申請，護照處理約需 4-6 週（加急約 2-3 週）。',
+        warning: '所有證件上的名字拼寫必須一致，辦理前請仔細核對。出生證明是所有其他證件的基礎文件。'
+      },
+      {
+        id: 8,
+        title: '回台',
+        offsetStart: 30,
+        offsetEnd: 45,
+        icon: '🏠',
+        tag: { text: '回台', class: 'tag-green' },
+        isRange: true,
+        items: [
+          '確認寶寶美國護照、台灣護照都已到手',
+          '確認寶寶的入國證明書已辦妥',
+          '購買或確認回程機票（嬰兒票）',
+          '準備寶寶搭機所需物品（奶粉、尿布、換洗衣物）',
+          '結清月子中心和醫院所有費用',
+          '回台後 30 天內至戶政事務所辦理出生登記',
+          '辦理寶寶健保加保'
+        ],
+        tip: '回台灣後需在 30 天內到戶政事務所辦理出生登記。記得攜帶：出生證明正本（需經駐外代表處驗證）、中文譯本、父母雙方戶籍謄本、身分證。'
+      }
+    ];
+
+    // 產生時程表
+    function generateTimeline() {
+      const input = document.getElementById('due-date');
+      if (!input.value) {
+        input.focus();
+        input.style.borderColor = 'var(--accent)';
+        setTimeout(() => { input.style.borderColor = ''; }, 2000);
+        return;
+      }
+
+      const dueDate = new Date(input.value + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // 產生摘要卡片
+      renderSummary(dueDate, today);
+
+      // 產生時間軸
+      renderTimeline(dueDate, today);
+
+      // 顯示結果
+      const wrapper = document.getElementById('timeline-result');
+      wrapper.classList.add('visible');
+
+      // 捲動到結果
+      setTimeout(() => {
+        wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+
+    // 摘要卡片
+    function renderSummary(dueDate, today) {
+      const container = document.getElementById('summary-cards');
+      const daysUntilDue = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+      const startDate = addDays(dueDate, -180);
+      const returnDate = addDays(dueDate, 45);
+      const totalDays = Math.ceil((returnDate - startDate) / (1000 * 60 * 60 * 24));
+
+      container.innerHTML = `
+        <div class="summary-card">
+          <div class="label">預產期</div>
+          <div class="value pink">${formatDate(dueDate)}</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">距今天數</div>
+          <div class="value ${daysUntilDue > 0 ? '' : 'orange'}">${daysUntilDue > 0 ? daysUntilDue + ' 天' : '已過期'}</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">建議赴美日</div>
+          <div class="value">${formatDate(addDays(dueDate, -60))}</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">預計回台日</div>
+          <div class="value">${formatDate(addDays(dueDate, 45))}</div>
+        </div>
+      `;
+    }
+
+    // 時間軸
+    function renderTimeline(dueDate, today) {
+      const container = document.getElementById('timeline-container');
+      let html = '';
+
+      MILESTONES.forEach(m => {
+        // 計算日期
+        let dateStr = '';
+        let milestoneDate;
+
+        if (m.isRange) {
+          const start = addDays(dueDate, m.offsetStart);
+          const end = addDays(dueDate, m.offsetEnd);
+          dateStr = `${formatDate(start)} ~ ${formatDate(end)}`;
+          milestoneDate = start;
+        } else {
+          milestoneDate = addDays(dueDate, m.offset);
+          dateStr = formatDate(milestoneDate);
+        }
+
+        // 判斷狀態
+        let statusClass = '';
+        if (m.isRange) {
+          const start = addDays(dueDate, m.offsetStart);
+          const end = addDays(dueDate, m.offsetEnd);
+          if (today > end) {
+            statusClass = 'completed';
+          } else if (today >= start && today <= end) {
+            statusClass = 'current';
+          }
+        } else {
+          if (today > milestoneDate) {
+            statusClass = 'completed';
+          } else {
+            // 檢查是否是「當前」節點：當前日期在此節點和下一個節點之間
+            const idx = MILESTONES.indexOf(m);
+            if (idx < MILESTONES.length - 1) {
+              const nextDate = MILESTONES[idx + 1].isRange
+                ? addDays(dueDate, MILESTONES[idx + 1].offsetStart)
+                : addDays(dueDate, MILESTONES[idx + 1].offset);
+              if (today >= milestoneDate && today < nextDate) {
+                statusClass = 'current';
+              }
+            } else if (today >= milestoneDate) {
+              statusClass = 'current';
+            }
+          }
+        }
+
+        // 計算距離今天的天數
+        const daysFromNow = Math.ceil((milestoneDate - today) / (1000 * 60 * 60 * 24));
+        let daysLabel = '';
+        if (daysFromNow > 0) {
+          daysLabel = `（${daysFromNow} 天後）`;
+        } else if (daysFromNow === 0) {
+          daysLabel = '（今天）';
+        } else {
+          daysLabel = `（${Math.abs(daysFromNow)} 天前）`;
+        }
+
+        // 建立 HTML
+        html += `
+          <div class="timeline-item ${statusClass}" onclick="this.classList.toggle('open')">
+            <span class="expand-icon">▸</span>
+            <h4>
+              <span class="step-number">${m.id}</span>
+              ${m.icon} ${m.title}
+              <span class="tag ${m.tag.class}">${m.tag.text}</span>
+            </h4>
+            <div class="date">${dateStr} ${daysLabel}</div>
+            <div class="detail">
+              <ul>
+                ${m.items.map(item => `
+                  <li>
+                    <span class="check-icon">✓</span>
+                    <span>${item}</span>
+                  </li>
+                `).join('')}
+              </ul>
+              ${m.tip ? `<div class="tip-box">💡 <strong>小提醒：</strong>${m.tip}</div>` : ''}
+              ${m.warning ? `<div class="warning-box">⚠️ <strong>注意：</strong>${m.warning}</div>` : ''}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // 展開全部
+    function expandAll() {
+      document.querySelectorAll('.timeline-item').forEach(item => {
+        item.classList.add('open');
+      });
+    }
+
+    // 收合全部
+    function collapseAll() {
+      document.querySelectorAll('.timeline-item').forEach(item => {
+        item.classList.remove('open');
+      });
+    }
+
+    // 即時計算：選日期就更新
+    document.getElementById('due-date').addEventListener('change', generateTimeline);
+
+    // 預設預產期：6 個月後
+    (function setDefaultDate() {
+      const input = document.getElementById('due-date');
+      const future = new Date();
+      future.setMonth(future.getMonth() + 6);
+      const y = future.getFullYear();
+      const m = String(future.getMonth() + 1).padStart(2, '0');
+      const d = String(future.getDate()).padStart(2, '0');
+      input.value = `${y}-${m}-${d}`;
+    })();
+  </script>
+
+</body>
+</html>
